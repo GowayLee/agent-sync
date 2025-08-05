@@ -38,3 +38,6 @@ _opam/
 # Agents
 .crush/
 .crush.json
+
+# Project
+.agent-sync.toml

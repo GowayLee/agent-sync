@@ -71,9 +71,8 @@ let load_data (table : Toml.Types.table) : (t, parse_error) result =
 
 let load ?(path = config_file) () : (t, parse_error) result =
   if not (Sys.file_exists path)
-  then (
-    Error (File_not_found path))
-  else (
+  then Error (File_not_found path)
+  else
     let open Toml in
     match Parser.from_filename path with
     | `Error (msg, loc) ->
@@ -85,7 +84,7 @@ let load ?(path = config_file) () : (t, parse_error) result =
               loc.source
               loc.line
               loc.column))
-    | `Ok toml_table -> load_data toml_table)
+    | `Ok toml_table -> load_data toml_table
 ;;
 
 type save_error =
@@ -133,4 +132,3 @@ let add_agent config agent_name filename =
 let remove_agent config agent_name =
   { config with agents = List.remove_assoc agent_name config.agents }
 ;;
-

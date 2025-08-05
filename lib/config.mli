@@ -63,3 +63,6 @@ val add_agent : t -> string -> string -> t
     @param agent_name Name of the agent to remove
     @return Updated configuration *)
 val remove_agent : t -> string -> t
+
+(** Default configuration filename *)
+val config_file : string
