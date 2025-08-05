@@ -1,0 +1,4 @@
+(executable
+ (public_name agent-sync)
+ (name main)
+ (libraries agent_sync))

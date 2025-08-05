@@ -1,0 +1,4 @@
+(test
+ (name test_agent_sync)
+ (libraries agent_sync ounit2)
+ (modules test_agent_sync test_config_load))

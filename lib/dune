@@ -1,0 +1,4 @@
+(library
+ (name agent_sync)
+ (libraries cmdliner toml yojson unix)
+ (modules config link_manager project registry))
