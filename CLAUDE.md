@@ -35,8 +35,9 @@ dune install
 ### Core Modules
 
 - **Config** (`lib/config.ml`): Handles TOML configuration parsing and validation. Manages agent file mappings and project settings.
-- **LinkManager** (`lib/link_manager.ml`): Manages hard link creation and synchronization between agent files and the main guide.
 - **Project** (`lib/project.ml`): Project detection and root directory management.
+- **CLI** (`lib/cli.ml`): Command-line interface providing init, add, status, repair, and help commands.
+- **LinkManager** (`lib/link_manager.ml`): Manages hard link creation and synchronization between agent files and the main guide.
 - **Registry** (`lib/registry.ml`): System-wide project indexing and tracking.
 
 ### Dependencies
@@ -61,6 +62,19 @@ crush = "CRUSH.md"
 gemini = "GEMINI.md"
 ```
 
+### CLI Commands
+
+The tool provides the following commands:
+
+- `init`: Initialize a new agent-sync project in the current directory
+- `add <agent> <filename>`: Add a new agent file mapping to the configuration
+- `status`: Show current project status and configured agents
+- `status --all`: Show all projects (requires Registry module - not implemented)
+- `repair`: Repair broken agent file links (requires LinkManager module - not implemented)
+- `help`: Show usage information
+
+All commands include proper error handling and user-friendly error messages.
+
 ## Development Workflow
 
 1. Make changes to source files in `lib/`
@@ -75,6 +89,7 @@ Tests are written using OUnit2 framework. Test files:
 
 - `test/test_agent_sync.ml`: Main test runner
 - `test/test_config_load.ml`: Configuration loading tests
+- `test/test_project.ml`: Project detection tests
 
 Test pattern:
 
@@ -116,27 +131,29 @@ Test pattern:
 
 ## Current Status
 
-The project is in early development with:
+The project is in active development with:
 
 - Complete configuration module with comprehensive error handling
 - Complete project detection and root directory management module
+- Complete CLI module with full command-line interface
 - Placeholder modules for link management and registry (not yet implemented)
-- Basic "Hello World" executable in `bin/main.ml`
+- Fully functional main executable in `bin/main.ml`
 - Test suite covering configuration loading and project detection
 
 ### Implementation Status
 
-- **Config** (`lib/config.ml`): ✅ Complete - TOML configuration parsing and validation
-- **Project** (`lib/project.ml`): ✅ Complete - Project detection and root directory management
+- **Config** (`lib/config.ml`): ✅ Complete - TOML configuration parsing and validation with save functionality
+- **Project** (`lib/project.ml`): ✅ Complete - Project detection, root directory management, and configuration validation
+- **CLI** (`lib/cli.ml`): ✅ Complete - Full command-line interface with init, add, status, repair, and help commands
 - **LinkManager** (`lib/link_manager.ml`): ❌ Not implemented - Empty placeholder
 - **Registry** (`lib/registry.ml`): ❌ Not implemented - Empty placeholder
-- **Main executable** (`bin/main.ml`): ⚠️ Basic - Only prints "Hello World"
+- **Main executable** (`bin/main.ml`): ✅ Complete - Proper CLI entry point
 
 ### Test Coverage
 
-- `test/test_config_load.ml`: ✅ Comprehensive configuration tests
-- `test/test_project.ml`: ✅ Project detection tests
-- `test/test_agent_sync.ml`: ✅ Main test runner
+- `test/test_config_load.ml`: ✅ Comprehensive configuration tests (9 test cases covering all error scenarios)
+- `test/test_project.ml`: ✅ Project detection tests (1 test case for directory detection)
+- `test/test_agent_sync.ml`: ✅ Main test runner (aggregates all test suites)
 
 ## Key Files
 
@@ -145,5 +162,8 @@ The project is in early development with:
 - `dune-project`: Project configuration
 - `agent-sync.opam`: Package dependencies and metadata
 - `lib/config.ml`: Complete configuration management implementation
+- `lib/project.ml`: Project detection and root directory management
+- `lib/cli.ml`: Complete command-line interface implementation
+- `bin/main.ml`: Main executable entry point
 - `test/test_config_load.ml`: Comprehensive configuration tests
-
+- `test/test_project.ml`: Project detection tests
