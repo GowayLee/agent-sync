@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-AgentSync is a CLI tool built with OCaml that synchronizes multiple agent documentation files (e.g., `CLAUDE.md`, `GEMINI.md`) to a single canonical document (`AGENT_GUIDE.md`) using hard links. This ensures all agent files remain identical without duplication or drift.
+AgentSync is a CLI tool built with OCaml that synchronizes multiple agent documentation files (e.g., `CLAUDE.md`, `GEMINI.md`) to a single canonical document (`AGENT_GUIDE.md`) using symbolic links. This ensures all agent files remain identical without duplication or drift.
 
 Key features:
 
-- Hard link synchronization for atomic, safe updates
+- Symbolic link synchronization for atomic, safe updates
 - TOML configuration via `.agent-sync.toml`
 - Project-aware CLI that detects project root automatically
 - System-level project indexing and management
@@ -40,7 +40,7 @@ dune install
 - **Config** (`lib/config.ml`): Handles TOML configuration parsing and validation. Manages agent file mappings and project settings.
 - **Project** (`lib/project.ml`): Project detection and root directory management.
 - **CLI** (`lib/cli.ml`): Command-line interface providing init, add, status, repair, and help commands.
-- **LinkManager** (`lib/link_manager.ml`): Manages hard link creation, repair, content merging, and synchronization between agent files and the main guide. Includes link status checking and conflict resolution.
+- **LinkManager** (`lib/link_manager.ml`): Manages symbolic link creation, repair, content merging, and synchronization between agent files and the main guide. Includes link status checking and conflict resolution.
 - **Registry** (`lib/registry.ml`): System-wide project indexing and tracking.
 
 ### Dependencies
@@ -49,7 +49,7 @@ dune install
 - `toml`: TOML configuration file parsing
 - `yojson`: JSON processing
 - `ounit2`: Unit testing framework
-- `unix`: Unix system calls for hard link operations
+- `unix`: Unix system calls for symbolic link operations
 
 ## Code Style Guidelines
 
@@ -115,18 +115,18 @@ The project is in active development with:
 - Complete configuration module with comprehensive error handling and save functionality
 - Complete project detection and root directory management module with validation
 - Complete CLI module with full command-line interface and error handling
-- Complete link management module with hard link operations, content merging, and conflict resolution
+- Complete link management module with symbolic link operations, content merging, and conflict resolution
 - Placeholder module for registry (not yet implemented)
 - Fully functional main executable in `bin/main.ml`
 - Test suite covering configuration loading and project detection
-- Working hard link synchronization system with proper error handling
+- Working symbolic link synchronization system with proper error handling
 
 ### Implementation Status
 
 - **Config** (`lib/config.ml`): ✅ Complete - TOML configuration parsing, validation, and save functionality
 - **Project** (`lib/project.ml`): ✅ Complete - Project detection, root directory management, and configuration validation
 - **CLI** (`lib/cli.ml`): ✅ Complete - Full command-line interface with init, add, status, repair, and help commands
-- **LinkManager** (`lib/link_manager.ml`): ✅ Complete - Hard link creation, repair, content merging, and link status checking
+- **LinkManager** (`lib/link_manager.ml`): ✅ Complete - Symbolic link creation, repair, content merging, and link status checking
 - **Registry** (`lib/registry.ml`): ❌ Not implemented - Empty placeholder
 - **Main executable** (`bin/main.ml`): ✅ Complete - Proper CLI entry point with command dispatch
 
@@ -146,7 +146,7 @@ The project is in active development with:
 - `lib/config.ml`: Complete configuration management implementation
 - `lib/project.ml`: Project detection and root directory management
 - `lib/cli.ml`: Complete command-line interface implementation
-- `lib/link_manager.ml`: Complete hard link management with content merging
+- `lib/link_manager.ml`: Complete symbolic link management with content merging
 - `bin/main.ml`: Main executable entry point
 - `test/test_config_load.ml`: Comprehensive configuration tests
 - `test/test_project.ml`: Project detection tests
