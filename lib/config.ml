@@ -18,7 +18,7 @@ type parse_error =
 
 let default_config =
   { main_guide = "AGENT_GUIDE.md"
-  ; agents = [ "claude", "CLAUDE.md"; "crush", "CRUSH.md"; "gemini", "GEMINI.md" ]
+  ; agents = [ "claude", "CLAUDE.md"; "crush", "CRUSH.md" ]
   }
 ;;
 

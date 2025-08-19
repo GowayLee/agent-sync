@@ -1,10 +1,10 @@
 (** Link Manager for hard link synchronization *)
 
 type link_status =
-  | ProperlyLinked of { inode : int } (* Hard link to main guide *)
+  | ProperlyLinked of { target : string } (* Symlink to main guide *)
   | NotLinked (* Regular file or doesn't exist *)
   | MissingFile (* File doesn't exist *)
-  | BrokenLink (* Points to wrong file *)
+  | BrokenLink (* Points to wrong file or broken symlink *)
 
 type link_info =
   { agent_name : string
@@ -29,12 +29,28 @@ let file_exists path =
   | _ -> false
 ;;
 
-let get_inode path =
+let is_symlink path =
   try
-    let stat = Unix.stat path in
-    Ok stat.Unix.st_ino
+    let stat = Unix.lstat path in
+    stat.Unix.st_kind = Unix.S_LNK
   with
+  | Unix.Unix_error _ -> false
+  | _ -> false
+;;
+
+let read_symlink_target path =
+  try Ok (Unix.readlink path) with
   | Unix.Unix_error (error, _, _) -> Error (Unix.error_message error)
+  | e -> Error (Printexc.to_string e)
+;;
+
+let resolve_relative_path ~target ~symlink_dir =
+  if Filename.is_relative target then Filename.concat symlink_dir target else target
+;;
+
+let normalize_path path =
+  try Ok (Unix.realpath path) with
+  | Unix.Unix_error _ -> Ok path (* Fallback to original path if realpath fails *)
   | e -> Error (Printexc.to_string e)
 ;;
 
@@ -84,7 +100,7 @@ let create_link ~main_guide ~agent_file =
   then Error ("Agent file already exists: " ^ agent_file)
   else (
     try
-      Unix.link main_guide agent_file;
+      Unix.symlink main_guide agent_file;
       Ok ()
     with
     | Unix.Unix_error (error, _, _) -> Error (Unix.error_message error)
@@ -97,13 +113,39 @@ let check_link ~main_guide ~agent_file =
   else if not (file_exists agent_file)
   then MissingFile
   else (
-    match get_inode main_guide, get_inode agent_file with
-    | Ok main_inode, Ok agent_inode when main_inode = agent_inode ->
-      ProperlyLinked { inode = main_inode }
-    | Ok _, Ok _ -> BrokenLink
-    | Error _, Error _ -> BrokenLink
-    | Error _, _ -> BrokenLink
-    | _, Error _ -> BrokenLink)
+    (* Get the directory of the agent file for resolving relative symlinks *)
+    let agent_dir = Filename.dirname (Unix.realpath agent_file) in
+    (* Normalize main_guide path for comparison *)
+    let normalized_main_guide =
+      match normalize_path main_guide with
+      | Ok path -> path
+      | Error _ -> main_guide (* Fallback to original path *)
+    in
+    if is_symlink agent_file
+    then (
+      (* It's a symlink, check if it points to the main guide *)
+      match read_symlink_target agent_file with
+      | Ok target ->
+        let resolved_target = resolve_relative_path ~target ~symlink_dir:agent_dir in
+        let normalized_target =
+          match normalize_path resolved_target with
+          | Ok path -> path
+          | Error _ -> resolved_target (* Fallback to resolved path *)
+        in
+        if normalized_target = normalized_main_guide
+        then ProperlyLinked { target = normalized_target }
+        else BrokenLink
+      | Error _ -> BrokenLink)
+    else (
+      (* It's not a symlink, check if it's a regular file with same content *)
+      match read_file_content main_guide, read_file_content agent_file with
+      | Ok main_content, Ok agent_content when main_content = agent_content ->
+        (* Files have identical content, consider it properly linked *)
+        ProperlyLinked { target = normalized_main_guide }
+      | Ok _, Ok _ -> BrokenLink
+      | Error _, Error _ -> BrokenLink
+      | Error _, _ -> BrokenLink
+      | _, Error _ -> BrokenLink))
 ;;
 
 let repair_link ~main_guide ~agent_file =

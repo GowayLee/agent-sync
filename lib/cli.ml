@@ -36,7 +36,7 @@ let cmd_init () =
   match Project.create_project_config () with
   | Ok config_path ->
     Printf.printf "Created agent-sync configuration: %s\n" config_path;
-    (* Load the created config and create initial hard links *)
+    (* Load the created config and create initial symbolic links *)
     (match Config.load ~path:config_path () with
      | Error parse_error ->
        Printf.eprintf
@@ -49,31 +49,31 @@ let cmd_init () =
        if List.length existing_files > 0
        then (
          Printf.eprintf
-           "Error: Found existing agent files with content that would be overwritten:\\n";
+           "Error: Found existing agent files with content that would be overwritten:\n";
          List.iter
            (fun (agent_name, agent_file) ->
-              Printf.eprintf "  - %s: %s\\n" agent_name agent_file)
+              Printf.eprintf "  - %s: %s\n" agent_name agent_file)
            existing_files;
          Printf.eprintf
-           "\\nPlease backup these files or remove them before running init.\\n";
+           "\nPlease backup these files or remove them before running init.\n";
          1)
        else (
-         Printf.printf "Creating initial hard links...\\n";
+         Printf.printf "Creating initial symbolic links...\n";
          let result = Link_manager.sync_all_links ~config in
          (* Show results *)
          if List.length result.successful > 0
          then (
            Printf.printf
-             "Successfully created links for %d agents:\\n"
+             "Successfully created links for %d agents:\n"
              (List.length result.successful);
-           List.iter (fun agent -> Printf.printf "  ✓ %s\\n" agent) result.successful);
+           List.iter (fun agent -> Printf.printf "  ✓ %s\n" agent) result.successful);
          if List.length result.failed > 0
          then (
            Printf.printf
-             "Failed to create links for %d agents:\\n"
+             "Failed to create links for %d agents:\n"
              (List.length result.failed);
            List.iter
-             (fun (agent, error) -> Printf.printf "  ✗ %s: %s\\n" agent error)
+             (fun (agent, error) -> Printf.printf "  ✗ %s: %s\n" agent error)
              result.failed);
          0))
   | Error error ->
@@ -102,7 +102,7 @@ let cmd_add agent filename =
             (string_of_save_error save_error);
           1
         | Ok () ->
-          (* Create the hard link *)
+          (* Create the symbolic link *)
           (match
              Link_manager.create_link
                ~main_guide:updated_config.main_guide
@@ -110,10 +110,10 @@ let cmd_add agent filename =
            with
            | Ok () ->
              Printf.printf "Added agent '%s' -> '%s'\n" agent filename;
-             Printf.printf "Created hard link to main guide.\n";
+             Printf.printf "Created symbolic link to main guide.\n";
              0
            | Error msg ->
-             Printf.eprintf "Warning: Failed to create hard link: %s\n" msg;
+             Printf.eprintf "Warning: Failed to create symbolic link: %s\n" msg;
              Printf.printf
                "Added agent '%s' -> '%s' (link creation failed)\n"
                agent
@@ -159,8 +159,8 @@ let cmd_status all =
                   in
                   let status_str =
                     match link_info.status with
-                    | Link_manager.ProperlyLinked { inode } ->
-                      Printf.sprintf "✓ Linked (inode: %d)" inode
+                    | Link_manager.ProperlyLinked { target } ->
+                      Printf.sprintf "✓ Linked (target: %s)" target
                     | Link_manager.NotLinked -> "✗ Not linked"
                     | Link_manager.MissingFile -> "✗ Missing file"
                     | Link_manager.BrokenLink -> "✗ Broken link"
@@ -174,6 +174,10 @@ let cmd_status all =
 (** Repair agent files *)
 let cmd_repair () =
   match Project.require_project () with
+  | Error (System_error str) ->
+    Printf.eprintf "Error: %s\n" str;
+    Printf.eprintf "  Try `agent-sync init` to initialize a project.\n";
+    1
   | Error error ->
     Printf.eprintf "Error: %s\n" (string_of_project_error error);
     1
@@ -184,7 +188,19 @@ let cmd_repair () =
        Printf.eprintf "Configuration error: %s\n" (string_of_parse_error parse_error);
        1
      | Ok config ->
-       (* First, check for existing agent files with content that would be overwritten *)
+       (* First, check if main_guide exists, create it if needed *)
+       if not (Link_manager.file_exists config.main_guide)
+       then (
+         Printf.printf
+           "Main guide file '%s' not found, creating empty file...\n"
+           config.main_guide;
+         match Link_manager.write_file_content config.main_guide "" with
+         | Ok () -> Printf.printf "Created empty main guide file.\n"
+         | Error msg ->
+           Printf.eprintf "Failed to create main guide file: %s\n" msg;
+           exit 1)
+       else ();
+       (* Check for existing agent files with content that would be overwritten *)
        let existing_files = Link_manager.check_existing_agent_files ~config in
        if List.length existing_files > 0
        then (
