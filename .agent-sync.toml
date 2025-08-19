@@ -1,0 +1,5 @@
+[agents]
+claude = "CLAUDE.md"
+crush = "CRUSH.md"
+[core]
+main_guide = "AGENT_GUIDE.md"
