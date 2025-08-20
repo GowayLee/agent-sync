@@ -58,7 +58,7 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           mkdir -p release
-          cp _install/usr/local/bin/agent-sync release/${{ matrix.binary_name }}
+          cp _install/bin/agent-sync release/${{ matrix.binary_name }}
           chmod +x release/${{ matrix.binary_name }}
           tar -czf agent-sync-${{ matrix.platform }}.tar.gz -C release ${{ matrix.binary_name }}
           sha256sum agent-sync-${{ matrix.platform }}.tar.gz > agent-sync-${{ matrix.platform }}.tar.gz.sha256
@@ -67,7 +67,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           mkdir -p release
-          copy _install\usr\local\bin\agent-sync.exe\release\${{ matrix.binary_name }}
+          copy _install\bin\agent-sync.exe\release\${{ matrix.binary_name }}
           7z a agent-sync-${{ matrix.platform }}.zip release\${{ matrix.binary_name }}
           sha256sum agent-sync-${{ matrix.platform }}.zip > agent-sync-${{ matrix.platform }}.zip.sha256
 
