@@ -17,6 +17,7 @@
 
 # ocamlbuild and Dune default working directory
 _build/
+_install/
 
 # ocamlbuild targets
 *.byte
