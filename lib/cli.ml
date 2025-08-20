@@ -239,12 +239,25 @@ let cmd_help () =
   Printf.printf "  add       Add a new agent file mapping\n";
   Printf.printf "  status    Show agent-sync status\n";
   Printf.printf "  repair    Repair broken agent file links\n";
+  Printf.printf "  license   Show license information\n";
   Printf.printf "  help      Show this help message\n\n";
   Printf.printf "EXAMPLES:\n";
   Printf.printf "  agent-sync init                    # Initialize in current directory\n";
   Printf.printf "  agent-sync add copilot COPILOT.md  # Add copilot agent\n";
   Printf.printf "  agent-sync status                  # Show current status\n";
   Printf.printf "  agent-sync status --all            # Show all registered projects\n";
+  Printf.printf "  agent-sync license                 # Show license information\n";
+  0
+;;
+
+(** Show license information *)
+let cmd_license () =
+  Printf.printf
+    "Agent-sync  Copyright (C) 2025 Haoyuan Li\n\
+     This program comes with ABSOLUTELY NO WARRANTY;\n\
+     This is free software, and you are welcome to redistribute it under certain \
+     conditions;\n\
+     Read LICENSE for details.\n";
   0
 ;;
 
@@ -257,6 +270,7 @@ let run args =
   | [ _; "status" ] -> cmd_status false
   | [ _; "status"; "--all" ] -> cmd_status true
   | [ _; "repair" ] -> cmd_repair ()
+  | [ _; "license" ] -> cmd_license ()
   | [ _; "help" ] -> cmd_help ()
   | _ :: cmd :: _ ->
     Printf.eprintf "Unknown command: %s\n" cmd;
