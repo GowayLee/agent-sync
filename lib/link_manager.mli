@@ -48,23 +48,6 @@ val write_file_content : string -> string -> (unit, string) result
    @return Result indicating success or failure *)
 val create_link : main_guide:string -> agent_file:string -> (unit, string) result
 
-(** Check the status of a link between agent file and main guide
-    @param main_guide Path to the main guide file
-    @param agent_file Path to the agent file to check
-    @return Current link status *)
-val check_link : main_guide:string -> agent_file:string -> link_status
-
-(** Repair a broken or missing link between agent file and main guide
-    @param main_guide Path to the main guide file
-    @param agent_file Path to the agent file to repair
-    @return Result indicating success or failure *)
-val repair_link : main_guide:string -> agent_file:string -> (unit, string) result
-
-(** Remove a link, converting the agent file back to a regular file
-    @param agent_file Path to the agent file to unlink
-    @return Result indicating success or failure *)
-val remove_link : agent_file:string -> (unit, string) result
-
 (** Get comprehensive information about a specific agent file link
     @param agent_name Name of the agent
     @param agent_file Path to the agent file

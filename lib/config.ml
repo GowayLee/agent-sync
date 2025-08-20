@@ -16,6 +16,19 @@ type parse_error =
   | Main_guide_not_a_string
   | Invalid_agent_mapping of string
 
+(** Convert config parse errors to user-friendly messages *)
+let string_of_parse_error = function
+  | File_not_found path -> Printf.sprintf "ration file not found: %s" path
+  | Parse_error msg -> Printf.sprintf "ration parse error: %s" msg
+  | Missing_core_table -> "Missing required [core] table in configuration"
+  | Missing_main_guide -> "Missing required 'main_guide' field in [core] table"
+  | Missing_agent_table -> "Missing required [agents] table in configuration"
+  | Core_table_not_a_table -> "[core] section exists but is not a valid table"
+  | Agents_table_not_a_table -> "[agents] section exists but is not a valid table"
+  | Main_guide_not_a_string -> "'main_guide' field must be a string"
+  | Invalid_agent_mapping msg -> Printf.sprintf "Invalid agent mapping: %s" msg
+;;
+
 let default_config =
   { main_guide = "AGENT_GUIDE.md"
   ; agents = [ "claude", "CLAUDE.md"; "crush", "CRUSH.md" ]
@@ -91,6 +104,12 @@ type save_error =
   | File_write_error of string * string (* path, system error message *)
   | Encoding_error of string (* if string conversion fails *)
 
+(** Convert config save errors to user-friendly messages *)
+let string_of_save_error = function
+  | File_write_error (path, msg) -> Printf.sprintf "Failed to write file %s: %s" path msg
+  | Encoding_error msg -> Printf.sprintf "ration encoding error: %s" msg
+;;
+
 let save ?(path = config_file) (config : t) =
   let open Toml.Min in
   let open Toml.Types in
@@ -127,8 +146,4 @@ let list_agents config = List.map fst config.agents
 
 let add_agent config agent_name filename =
   { config with agents = (agent_name, filename) :: config.agents }
-;;
-
-let remove_agent config agent_name =
-  { config with agents = List.remove_assoc agent_name config.agents }
 ;;

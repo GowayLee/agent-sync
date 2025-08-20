@@ -11,6 +11,14 @@ type error =
   | Permission_denied of string
   | System_error of string
 
+(** Convert project errors to user-friendly messages *)
+let string_of_project_error = function
+  | Not_in_project -> "Not in an agent-sync project directory"
+  | Config_not_found path -> Printf.sprintf "Configuration file not found: %s" path
+  | Permission_denied msg -> Printf.sprintf "Permission denied: %s" msg
+  | System_error msg -> Printf.sprintf "System error: %s" msg
+;;
+
 let config_file = Config.config_file
 
 let rec find_project_root current_dir =
@@ -44,37 +52,10 @@ let is_project_dir dir =
   Sys.file_exists config_path
 ;;
 
-let find_config_in_cwd () =
-  match get_current_dir () with
-  | Error e -> Error e
-  | Ok current_dir ->
-    let config_path = Filename.concat current_dir config_file in
-    if Sys.file_exists config_path
-    then Ok config_path
-    else Error (Config_not_found config_path)
-;;
-
 let get_project_info () =
   match detect_project () with
   | Error e -> Error e
   | Ok project -> Ok project
-;;
-
-let get_relative_path project path =
-  if Filename.is_relative path
-  then path
-  else (
-    try
-      let rel_path = Filename.concat project.root path in
-      Filename.current_dir_name ^ "/" ^ rel_path
-    with
-    | _ -> path)
-;;
-
-let absolute_path project path =
-  if String.length path > 0 && path.[0] = '/'
-  then path
-  else Filename.concat project.root path
 ;;
 
 let validate_project project =
@@ -88,7 +69,11 @@ let validate_project project =
 let require_project () =
   match get_project_info () with
   | Ok project -> Ok project
-  | Error Not_in_project -> Error (System_error "Not in an agent-sync project directory")
+  | Error Not_in_project ->
+    Error
+      (System_error
+         "Not in an agent-sync project directory\n\
+          \tTry `agent-sync init` to initialize project")
   | Error e -> Error e
 ;;
 

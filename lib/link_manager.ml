@@ -177,18 +177,6 @@ let repair_link ~main_guide ~agent_file =
        | Error _, Error _ -> Error "Both files unreadable"))
 ;;
 
-let remove_link ~agent_file =
-  if not (file_exists agent_file)
-  then Error ("Agent file does not exist: " ^ agent_file)
-  else (
-    try
-      Unix.unlink agent_file;
-      Ok ()
-    with
-    | Unix.Unix_error (error, _, _) -> Error (Unix.error_message error)
-    | e -> Error (Printexc.to_string e))
-;;
-
 let get_link_info ~agent_name ~agent_file ~main_guide =
   { agent_name; agent_file; main_guide; status = check_link ~main_guide ~agent_file }
 ;;

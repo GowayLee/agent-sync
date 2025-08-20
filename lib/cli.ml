@@ -1,36 +1,5 @@
 (** CLI module for agent-sync command-line interface *)
 
-open Config
-open Project
-open Link_manager
-
-(** Convert project errors to user-friendly messages *)
-let string_of_project_error = function
-  | Not_in_project -> "Not in an agent-sync project directory"
-  | Config_not_found path -> Printf.sprintf "Configuration file not found: %s" path
-  | Permission_denied msg -> Printf.sprintf "Permission denied: %s" msg
-  | System_error msg -> Printf.sprintf "System error: %s" msg
-;;
-
-(** Convert config parse errors to user-friendly messages *)
-let string_of_parse_error = function
-  | File_not_found path -> Printf.sprintf "Configuration file not found: %s" path
-  | Parse_error msg -> Printf.sprintf "Configuration parse error: %s" msg
-  | Missing_core_table -> "Missing required [core] table in configuration"
-  | Missing_main_guide -> "Missing required 'main_guide' field in [core] table"
-  | Missing_agent_table -> "Missing required [agents] table in configuration"
-  | Core_table_not_a_table -> "[core] section exists but is not a valid table"
-  | Agents_table_not_a_table -> "[agents] section exists but is not a valid table"
-  | Main_guide_not_a_string -> "'main_guide' field must be a string"
-  | Invalid_agent_mapping msg -> Printf.sprintf "Invalid agent mapping: %s" msg
-;;
-
-(** Convert config save errors to user-friendly messages *)
-let string_of_save_error = function
-  | File_write_error (path, msg) -> Printf.sprintf "Failed to write file %s: %s" path msg
-  | Encoding_error msg -> Printf.sprintf "Configuration encoding error: %s" msg
-;;
-
 (** Initialize a new agent-sync project *)
 let cmd_init () =
   match Project.create_project_config () with
@@ -41,7 +10,7 @@ let cmd_init () =
      | Error parse_error ->
        Printf.eprintf
          "Warning: Could not load created configuration: %s\n"
-         (string_of_parse_error parse_error);
+         (Config.string_of_parse_error parse_error);
        0
      | Ok config ->
        (* Check for existing agent files that would be overwritten *)
@@ -75,9 +44,18 @@ let cmd_init () =
            List.iter
              (fun (agent, error) -> Printf.printf "  ✗ %s: %s\n" agent error)
              result.failed);
+         (* Register project in registry *)
+         (match Registry.register_current_project () with
+          | Error registry_error ->
+            Printf.eprintf
+              "Warning: Could not update project registry: %s\n"
+              (Registry.string_of_registry_error registry_error)
+          | Ok () -> Printf.printf "Project registered in system registry.\n");
          0))
   | Error error ->
-    Printf.eprintf "Failed to initialize project: %s\n" (string_of_project_error error);
+    Printf.eprintf
+      "Failed to initialize project: %s\n"
+      (Project.string_of_project_error error);
     1
 ;;
 
@@ -85,13 +63,15 @@ let cmd_init () =
 let cmd_add agent filename =
   match Project.require_project () with
   | Error error ->
-    Printf.eprintf "Error: %s\n" (string_of_project_error error);
+    Printf.eprintf "Error: %s\n" (Project.string_of_project_error error);
     1
   | Ok project ->
     let config_path = project.config_path in
     (match Config.load ~path:config_path () with
      | Error parse_error ->
-       Printf.eprintf "Configuration error: %s\n" (string_of_parse_error parse_error);
+       Printf.eprintf
+         "Configuration error: %s\n"
+         (Config.string_of_parse_error parse_error);
        1
      | Ok config ->
        let updated_config = Config.add_agent config agent filename in
@@ -99,7 +79,7 @@ let cmd_add agent filename =
         | Error save_error ->
           Printf.eprintf
             "Failed to save configuration: %s\n"
-            (string_of_save_error save_error);
+            (Config.string_of_save_error save_error);
           1
         | Ok () ->
           (* Create the symbolic link *)
@@ -125,19 +105,26 @@ let cmd_add agent filename =
 let cmd_status all =
   if all
   then (
-    Printf.eprintf "System-wide project listing is not yet implemented.\n";
-    Printf.eprintf "This feature requires the Registry module.\n";
-    1)
+    (* Show all registered projects from registry *)
+    match Registry.show_all_projects () with
+    | Error registry_error ->
+      Printf.eprintf
+        "Error loading project registry: %s\n"
+        (Registry.string_of_registry_error registry_error);
+      1
+    | Ok () -> 0)
   else (
     match Project.require_project () with
     | Error error ->
-      Printf.eprintf "Error: %s\n" (string_of_project_error error);
+      Printf.eprintf "Error: %s\n" (Project.string_of_project_error error);
       1
     | Ok project ->
       let config_path = project.config_path in
       (match Config.load ~path:config_path () with
        | Error parse_error ->
-         Printf.eprintf "Configuration error: %s\n" (string_of_parse_error parse_error);
+         Printf.eprintf
+           "Configuration error: %s\n"
+           (Config.string_of_parse_error parse_error);
          1
        | Ok config ->
          Printf.printf "Project: %s\n" project.root;
@@ -174,18 +161,16 @@ let cmd_status all =
 (** Repair agent files *)
 let cmd_repair () =
   match Project.require_project () with
-  | Error (System_error str) ->
-    Printf.eprintf "Error: %s\n" str;
-    Printf.eprintf "  Try `agent-sync init` to initialize a project.\n";
-    1
   | Error error ->
-    Printf.eprintf "Error: %s\n" (string_of_project_error error);
+    Printf.eprintf "Error: %s\n" (Project.string_of_project_error error);
     1
   | Ok project ->
     let config_path = project.config_path in
     (match Config.load ~path:config_path () with
      | Error parse_error ->
-       Printf.eprintf "Configuration error: %s\n" (string_of_parse_error parse_error);
+       Printf.eprintf
+         "Configuration error: %s\n"
+         (Config.string_of_parse_error parse_error);
        1
      | Ok config ->
        (* First, check if main_guide exists, create it if needed *)
@@ -234,6 +219,13 @@ let cmd_repair () =
          if List.length result.successful = 0 && List.length result.failed = 0
          then
            Printf.printf "No agents configured or all agents already properly linked.\n";
+         (* Register project in registry *)
+         (match Registry.register_current_project () with
+          | Error registry_error ->
+            Printf.eprintf
+              "Warning: Could not update project registry: %s\n"
+              (Registry.string_of_registry_error registry_error)
+          | Ok () -> Printf.printf "Project registered in system registry.\n");
          0))
 ;;
 
@@ -252,8 +244,7 @@ let cmd_help () =
   Printf.printf "  agent-sync init                    # Initialize in current directory\n";
   Printf.printf "  agent-sync add copilot COPILOT.md  # Add copilot agent\n";
   Printf.printf "  agent-sync status                  # Show current status\n";
-  Printf.printf
-    "  agent-sync status --all            # Show all projects (not implemented)\n";
+  Printf.printf "  agent-sync status --all            # Show all registered projects\n";
   0
 ;;
 

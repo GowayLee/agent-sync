@@ -1,21 +1,3 @@
-(** Convert project errors to user-friendly error messages.
-
-    @param error The project error to convert
-    @return User-friendly string description of the error *)
-val string_of_project_error : Project.error -> string
-
-(** Convert configuration parse errors to user-friendly error messages.
-
-    @param error The configuration parse error to convert
-    @return User-friendly string description of the error *)
-val string_of_parse_error : Config.parse_error -> string
-
-(** Convert configuration save errors to user-friendly error messages.
-
-    @param error The configuration save error to convert
-    @return User-friendly string description of the error *)
-val string_of_save_error : Config.save_error -> string
-
 (** Initialize a new agent-sync project in the current directory.
 
     Creates a default .agent-sync.toml configuration file with

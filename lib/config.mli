@@ -19,6 +19,12 @@ type parse_error =
   | Main_guide_not_a_string (** main_guide field exists but is not a string *)
   | Invalid_agent_mapping of string (** Agent mapping has invalid format or content *)
 
+(** Convert configuration parse errors to user-friendly error messages.
+
+    @param error The configuration parse error to convert
+    @return User-friendly string description of the error *)
+val string_of_parse_error : parse_error -> string
+
 (** Load configuration from TOML file
     @param path Optional path to configuration file (defaults to ".agent-sync.toml")
     @return Configuration data or parse error *)
@@ -29,6 +35,12 @@ type save_error =
   | File_write_error of string * string
   (** File system error during write operation (path, error_message) *)
   | Encoding_error of string (** TOML encoding error with details *)
+
+(** Convert configuration save errors to user-friendly error messages.
+
+    @param error The configuration save error to convert
+    @return User-friendly string description of the error *)
+val string_of_save_error : save_error -> string
 
 (** Save configuration to TOML file
     @param path Optional path to save configuration (defaults to ".agent-sync.toml")
@@ -57,12 +69,6 @@ val list_agents : t -> string list
     @param filename Filename for the agent documentation
     @return Updated configuration *)
 val add_agent : t -> string -> string -> t
-
-(** Remove an agent mapping
-    @param config Configuration data
-    @param agent_name Name of the agent to remove
-    @return Updated configuration *)
-val remove_agent : t -> string -> t
 
 (** Default configuration filename *)
 val config_file : string
