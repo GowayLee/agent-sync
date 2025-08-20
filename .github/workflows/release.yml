@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+    
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (optional)'
+        required: false
+        default: ''
+
+permissions: read-all
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+      fail-fast: false
+    
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+      - name: Checkout tree
+        uses: actions/checkout@v4
+
+      - name: Set-up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5
+
+      - run: opam install . --deps-only --with-test
+
+      - run: opam exec -- dune build
+
+      - run: opam exec -- dune runtest
+    
