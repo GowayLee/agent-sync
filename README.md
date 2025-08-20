@@ -45,15 +45,18 @@ AgentSync solves these problems by:
 
 ## Features
 
-| Feature                           | Description                                                                    |
-| --------------------------------- | ------------------------------------------------------------------------------ |
-| **Symbolic Link Synchronization** | Uses filesystem symbolic links for atomic, safe, and efficient synchronization |
-| **TOML Configuration**            | Simple, human-readable `.agent-sync.toml` configuration file                   |
-| **Project-Aware CLI**             | Run commands from any subdirectory — automatically detects project root        |
-| **Content Merging**               | Intelligent merging when recovering from broken links                          |
-| **Cross-Platform**                | Works on Linux, macOS, and other Unix-like systems                             |
-| **Minimal Dependencies**          | Lightweight implementation with few runtime dependencies                       |
-| **Type-Safe**                     | Built with OCaml for reliability and performance                               |
+| Feature                            | Description                                                                    |
+| ---------------------------------- | ------------------------------------------------------------------------------ |
+| **Symbolic Link Synchronization**  | Uses filesystem symbolic links for atomic, safe, and efficient synchronization |
+| **System-wide Project Registry**   | JSON-based registry for tracking all agent-sync projects across the system     |
+| **Automatic Project Registration** | Projects are automatically registered during init and repair operations        |
+| **TOML Configuration**             | Simple, human-readable `.agent-sync.toml` configuration file                   |
+| **Project-Aware CLI**              | Run commands from any subdirectory — automatically detects project root        |
+| **Comprehensive Link Status**      | Detailed link verification and reporting for all agent files                   |
+| **Atomic Operations**              | Safe operations with proper error handling and rollback capabilities           |
+| **Cross-Platform**                 | Works on Linux, macOS, and other Unix-like systems                             |
+| **Minimal Dependencies**           | Lightweight implementation with few runtime dependencies                       |
+| **Type-Safe**                      | Built with OCaml for reliability and performance                               |
 
 ## Installation
 
@@ -111,6 +114,7 @@ This creates:
 - `.agent-sync.toml` configuration file
 - `AGENT_GUIDE.md` (empty template)
 - Sets up the project for agent file management
+- Automatically registers the project in the system-wide registry
 
 ### 2. Add Agent Files
 
@@ -133,13 +137,13 @@ agent-sync add qwen "QWEN.md"
 agent-sync status
 
 # Expected output:
-# ✓ Project: /path/to/your/project
-# ✓ Main guide: AGENT_GUIDE.md
-# ✓ Agent files (4):
-#   - CLAUDE.md (symbolic link)
-#   - GEMINI.md (symbolic link)
-#   - COPILOT.md (symbolic link)
-#   - QWEN.md (symbolic link)
+# Project: /path/to/your/project
+# Main guide: AGENT_GUIDE.md
+# Configured agents:
+#   claude -> CLAUDE.md [✓ Linked (target: AGENT_GUIDE.md)]
+#   gemini -> GEMINI.md [✓ Linked (target: AGENT_GUIDE.md)]
+#   copilot -> COPILOT.md [✓ Linked (target: AGENT_GUIDE.md)]
+#   qwen -> QWEN.md [✓ Linked (target: AGENT_GUIDE.md)]
 ```
 
 ### 4. Use Your Agent Files
@@ -150,6 +154,9 @@ echo "# Project Overview" > CLAUDE.md
 
 # Verify all files are identical
 cat CLAUDE.md GEMINI.md AGENT_GUIDE.md
+
+# Check system-wide project registry
+agent-sync status --all
 ```
 
 ## Configuration
@@ -251,7 +258,7 @@ Show current project status and agent link status.
 # Show current project status
 agent-sync status
 
-# Show all projects system-wide
+# Show all registered projects system-wide
 agent-sync status --all
 ```
 
@@ -281,7 +288,7 @@ agent-sync help
 # 1. Navigate to project
 cd my-new-project
 
-# 2. Initialize AgentSync
+# 2. Initialize AgentSync (automatically registers project)
 agent-sync init
 
 # 3. Add required agents
@@ -294,6 +301,9 @@ agent-sync status
 
 # 5. Start using your agent files
 echo "# My Project" > AGENT_GUIDE.md
+
+# 6. Check system-wide registry
+agent-sync status --all
 ```
 
 #### Recovering from Broken Links
@@ -302,24 +312,27 @@ echo "# My Project" > AGENT_GUIDE.md
 # Check status
 agent-sync status
 
-# If links are broken, repair them
+# If links are broken, repair them (also registers project)
 agent-sync repair
 
 # Verify repair
 agent-sync status
+
+# Confirm project is in registry
+agent-sync status --all
 ```
 
 #### Managing Multiple Projects
 
 ```bash
-# List all managed projects
+# List all registered projects with validation status
 agent-sync status --all
 
 # Work on specific project
 cd /path/to/project
 agent-sync status
 
-# Repair specific project
+# Repair specific project (automatically registers in registry)
 cd /path/to/project
 agent-sync repair
 ```
@@ -414,12 +427,14 @@ dune runtest --verbose
 | **Project**     | `lib/project.ml`      | Project detection and root directory management |
 | **CLI**         | `lib/cli.ml`          | Command-line interface and command dispatch     |
 | **LinkManager** | `lib/link_manager.ml` | Symbolic link operations and content merging    |
-| **Registry**    | `lib/registry.ml`     | System-wide project indexing (future)           |
+| **Registry**    | `lib/registry.ml`     | System-wide project indexing and tracking       |
 
 ### Data Flow
 
 ```
 User Input → CLI → Config/Project → LinkManager → Filesystem Operations
+     ↓
+Registry ← Project Registration → System-wide Tracking
      ↓
 Error Handling ← Result Types ← All Modules
 ```
@@ -429,6 +444,7 @@ Error Handling ← Result Types ← All Modules
 - **Single Source of Truth**: `AGENT_GUIDE.md` is the only real file
 - **Atomic Operations**: Use symbolic links for filesystem-level atomicity
 - **Error Recovery**: Graceful handling of broken links and conflicts
+- **System-wide Tracking**: Automatic project registration and registry management
 - **Type Safety**: Leverage OCaml's type system for reliability
 - **Minimal Dependencies**: Keep runtime dependencies lightweight
 
