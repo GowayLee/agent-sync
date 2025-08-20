@@ -88,10 +88,19 @@ jobs:
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
             ./agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.${{ matrix.os == 'windows-latest' && 'zip' || 'tar.gz' }}
             ./agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.${{ matrix.os == 'windows-latest' && 'zip' || 'tar.gz' }}.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Artifacts (Manual Build)
+        uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/tags/')
+        with:
+          name: agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}
+          path: |
+            ./agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.${{ matrix.os == 'windows-latest' && 'zip' || 'tar.gz' }}
+            ./agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.${{ matrix.os == 'windows-latest' && 'zip' || 'tar.gz' }}.sha256
