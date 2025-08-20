@@ -74,7 +74,7 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            cp _install\bin\agent-sync.exe agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
+            cp _install/bin/agent-sync.exe agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
           else
             cp _install/bin/agent-sync agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
             chmod +x agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
