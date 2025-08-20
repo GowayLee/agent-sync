@@ -70,30 +70,23 @@ jobs:
       - name: Install
         run: opam install . --destdir _install
 
-      - name: Package binary (Unix)
-        if: matrix.os != 'windows-latest'
+      - name: Prepare binary
         run: |
-          mkdir -p release
-          cp _install/bin/agent-sync release/agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
-          chmod +x release/agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
-          tar -czf agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.tar.gz -C release agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
-          sha256sum agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.tar.gz > agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.tar.gz.sha256
-
-      - name: Package binary (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          mkdir -p release
-          copy _install\bin\agent-sync.exe release\agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
-          7z a agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.zip release\agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
-          sha256sum agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.zip > agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.zip.sha256
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            cp _install\bin\agent-sync.exe agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
+          else
+            cp _install/bin/agent-sync agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
+            chmod +x agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
+          fi
+          sha256sum agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }} > agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}.sha256
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            ./agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.${{ matrix.os == 'windows-latest' && 'zip' || 'tar.gz' }}
-            ./agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.${{ matrix.os == 'windows-latest' && 'zip' || 'tar.gz' }}.sha256
+            ./agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
+            ./agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -103,5 +96,5 @@ jobs:
         with:
           name: agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}
           path: |
-            ./agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.${{ matrix.os == 'windows-latest' && 'zip' || 'tar.gz' }}
-            ./agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}.${{ matrix.os == 'windows-latest' && 'zip' || 'tar.gz' }}.sha256
+            ./agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}
+            ./agent-sync-${{ steps.version.outputs.VERSION }}-${{ matrix.platform }}${{ matrix.binary_ext }}.sha256
